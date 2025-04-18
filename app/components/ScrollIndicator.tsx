@@ -2,14 +2,12 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 type ScrollIndicatorProps = {
-  canExit: boolean;
   isSnapping: boolean;
   scrollVelocity: number;
   direction?: 'up' | 'down' | 'both';
 };
 
 const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({
-  canExit,
   isSnapping,
   scrollVelocity,
   direction = 'both'

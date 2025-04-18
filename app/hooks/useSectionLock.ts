@@ -1,14 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useScrollVelocity } from './useScrollVelocity';
 
-type Section = {
-  id: string;
-  element: HTMLElement;
-  top: number;
-  bottom: number;
-  height: number;
-};
-
 type SectionLockOptions = {
   downThreshold?: number;  // Percentage threshold when scrolling down (0.0 to 1.0)
   upThreshold?: number;    // Percentage threshold when scrolling up (0.0 to 1.0)
@@ -57,9 +49,6 @@ export const useSectionLock = (
   // Store sections and their positions
   const sectionsRef = useRef<{ id: string; top: number; bottom: number; height: number }[]>([]);
 
-  // Keep track of the current threshold based on scroll direction
-  const [currentThreshold, setCurrentThreshold] = useState(downThreshold);
-  
   // Determine the current section based on scroll position
   const determineActiveSection = useCallback(() => {
     const scrollPosition = window.scrollY;
@@ -91,12 +80,7 @@ export const useSectionLock = (
         sectionProgress = Math.max(0, Math.min(1, sectionProgress));
         setScrollProgress(sectionProgress);
         
-        // Update the threshold based on scroll direction
-        if (scrollDirection === 'up') {
-          setCurrentThreshold(upThreshold);
-        } else if (scrollDirection === 'down') {
-          setCurrentThreshold(downThreshold);
-        }
+        // No need to update currentThreshold as it's now calculated dynamically
         
         return;
       }

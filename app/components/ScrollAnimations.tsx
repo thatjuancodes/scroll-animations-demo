@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, useScroll, useTransform, useSpring, MotionValue, AnimatePresence } from 'framer-motion';
-import { useScrollVelocity } from '../hooks/useScrollVelocity';
 import { useSectionLock } from '../hooks/useSectionLock';
 import ScrollIndicator from './ScrollIndicator';
 
@@ -8,7 +7,6 @@ type AnimatedCardProps = {
   index: number;
   color: string;
   scrollYProgress: MotionValue<number>;
-  scrollVelocity: number;
   isActive: boolean;
 };
 
@@ -16,7 +14,6 @@ const AnimatedCard: React.FC<AnimatedCardProps> = ({
   index, 
   color, 
   scrollYProgress, 
-  scrollVelocity,
   isActive 
 }) => {
   // Calculate opacity for simple fade-in effect
@@ -183,6 +180,12 @@ const DevControlsPanel: React.FC<{
   setSnapDuration: (value: number) => void;
   cooldownDuration: number;
   setCooldownDuration: (value: number) => void;
+  fadeDuration: number;
+  setFadeDuration: (value: number) => void;
+  fadeDistance: number;
+  setFadeDistance: (value: number) => void;
+  animationType: string;
+  setAnimationType: (value: string) => void;
 }> = ({
   downThreshold,
   setDownThreshold,
@@ -193,7 +196,13 @@ const DevControlsPanel: React.FC<{
   snapDuration,
   setSnapDuration,
   cooldownDuration,
-  setCooldownDuration
+  setCooldownDuration,
+  fadeDuration,
+  setFadeDuration,
+  fadeDistance,
+  setFadeDistance,
+  animationType,
+  setAnimationType
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -264,6 +273,17 @@ const DevControlsPanel: React.FC<{
       return value.toFixed(2);
     }
   };
+
+  // Animation type options
+  const animationTypes = [
+    'simple-fade',
+    'fade-up',
+    'fade-down',
+    'fade-left',
+    'fade-right',
+    'zoom-in',
+    'zoom-out'
+  ];
 
   return (
     <div style={panelStyle}>
@@ -356,8 +376,142 @@ const DevControlsPanel: React.FC<{
             style={sliderStyle}
           />
         </div>
+
+        <h3 style={{fontSize: '14px', marginTop: '25px', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '15px'}}>Section Animations</h3>
+        
+        <div style={{marginTop: '15px'}}>
+          <label style={labelStyle}>
+            Animation Type
+          </label>
+          <select 
+            value={animationType}
+            onChange={(e) => setAnimationType(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '5px',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: '4px'
+            }}
+          >
+            {animationTypes.map(type => (
+              <option key={type} value={type}>
+                {type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div style={{marginTop: '15px'}}>
+          <label style={labelStyle}>
+            Fade Duration 
+            <span style={valueStyle}>{formatValue(fadeDuration, 'duration')}</span>
+          </label>
+          <input 
+            type="range" 
+            min="100" 
+            max="1500" 
+            step="50" 
+            value={fadeDuration} 
+            onChange={(e) => setFadeDuration(parseInt(e.target.value))}
+            style={sliderStyle}
+          />
+        </div>
+        
+        <div style={{marginTop: '15px'}}>
+          <label style={labelStyle}>
+            Animation Distance 
+            <span style={valueStyle}>{fadeDistance}px</span>
+          </label>
+          <input 
+            type="range" 
+            min="0" 
+            max="200" 
+            step="10" 
+            value={fadeDistance} 
+            onChange={(e) => setFadeDistance(parseInt(e.target.value))}
+            style={sliderStyle}
+          />
+        </div>
       </div>
     </div>
+  );
+};
+
+// Animated Section Wrapper component
+const AnimatedSection: React.FC<{
+  id: string;
+  className: string;
+  activeSection: string | null;
+  children: React.ReactNode;
+  fadeDuration: number;
+  fadeDistance: number;
+  animationType: string;
+}> = ({ id, className, activeSection, children, fadeDuration, fadeDistance, animationType }) => {
+  const [key, setKey] = useState(0);
+  
+  // Reset animation key when this section becomes active
+  useEffect(() => {
+    if (activeSection === id) {
+      setKey(prevKey => prevKey + 1);
+    }
+  }, [activeSection, id]);
+  
+  // Different animation presets
+  const getAnimationVariants = () => {
+    switch(animationType) {
+      case 'fade-up':
+        return {
+          initial: { opacity: 0, y: fadeDistance },
+          animate: { opacity: 1, y: 0 }
+        };
+      case 'fade-down':
+        return {
+          initial: { opacity: 0, y: -fadeDistance },
+          animate: { opacity: 1, y: 0 }
+        };
+      case 'fade-left':
+        return {
+          initial: { opacity: 0, x: -fadeDistance },
+          animate: { opacity: 1, x: 0 }
+        };
+      case 'fade-right':
+        return {
+          initial: { opacity: 0, x: fadeDistance },
+          animate: { opacity: 1, x: 0 }
+        };
+      case 'zoom-in':
+        return {
+          initial: { opacity: 0, scale: 0.9 },
+          animate: { opacity: 1, scale: 1 }
+        };
+      case 'zoom-out':
+        return {
+          initial: { opacity: 0, scale: 1.1 },
+          animate: { opacity: 1, scale: 1 }
+        };
+      default: // Simple fade
+        return {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 }
+        };
+    }
+  };
+  
+  const variants = getAnimationVariants();
+  
+  return (
+    <motion.section
+      id={id}
+      className={className}
+      key={key}
+      initial={variants.initial}
+      animate={variants.animate}
+      transition={{ duration: fadeDuration / 1000, ease: "easeOut" }}
+    >
+      {children}
+    </motion.section>
   );
 };
 
@@ -371,6 +525,11 @@ const ScrollAnimations: React.FC = () => {
   const [snapDuration, setSnapDuration] = useState(1000);
   const [cooldownDuration, setCooldownDuration] = useState(1000);
   
+  // Section animation controls
+  const [fadeDuration, setFadeDuration] = useState(500);
+  const [fadeDistance, setFadeDistance] = useState(50);
+  const [animationType, setAnimationType] = useState('fade-up');
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start end', 'end start']
@@ -381,7 +540,6 @@ const ScrollAnimations: React.FC = () => {
     activeSection, 
     isSnapping, 
     inCooldown,
-    canExitSection,
     isScrollDisabled,
     scrollProgress,
     scrollDirection,
@@ -439,7 +597,7 @@ const ScrollAnimations: React.FC = () => {
         <div>Progress Edge: {scrollDirection === 'down' ? 'Bottom of viewport' : 'Top of viewport'}</div>
         <div>Section Progress: {Math.round(scrollProgress * 100)}%</div>
         <div>Threshold: {Math.round(currentThreshold * 100)}%</div>
-        <div>At Bottom: {scrollProgress >= 0.95 ? `Yes (min vel: 1.0)` : 'No'}</div>
+        <div>At Bottom: {scrollProgress >= 0.95 ? `Yes (min vel: 1.0)` : "No"}</div>
         <div>Snapping: {isSnapping ? 'Yes' : 'No'}</div>
         <div>Cooldown: {inCooldown ? 'Yes (scrolling locked)' : 'No'}</div>
         <div>Scroll Locked: {isScrollDisabled ? 'Yes' : 'No'}</div>
@@ -457,10 +615,15 @@ const ScrollAnimations: React.FC = () => {
         setSnapDuration={setSnapDuration}
         cooldownDuration={cooldownDuration}
         setCooldownDuration={setCooldownDuration}
+        fadeDuration={fadeDuration}
+        setFadeDuration={setFadeDuration}
+        fadeDistance={fadeDistance}
+        setFadeDistance={setFadeDistance}
+        animationType={animationType}
+        setAnimationType={setAnimationType}
       />
       
       <ScrollIndicator 
-        canExit={canExitSection}
         isSnapping={isSnapping}
         scrollVelocity={scrollVelocity}
         direction={getScrollDirection()}
@@ -480,49 +643,82 @@ const ScrollAnimations: React.FC = () => {
         activeSection={activeSection} 
       />
       
-      <section id="intro" className="scroll-section hero">
+      <AnimatedSection 
+        id="intro" 
+        className="scroll-section hero" 
+        activeSection={activeSection}
+        fadeDuration={fadeDuration}
+        fadeDistance={fadeDistance}
+        animationType={animationType}
+      >
         <h1>Scroll Animation Demo</h1>
         <p>Direction-based transitions</p>
         <div className="instruction">
           <p>Progress tracks viewport edges and transitions at 98% in both directions</p>
         </div>
-      </section>
+      </AnimatedSection>
       
-      <section id="section1" className="scroll-section cards-container">
+      <AnimatedSection 
+        id="section1" 
+        className="scroll-section cards-container" 
+        activeSection={activeSection}
+        fadeDuration={fadeDuration}
+        fadeDistance={fadeDistance}
+        animationType={animationType}
+      >
         {colors.map((color, index) => (
           <AnimatedCard
             key={index}
             index={index}
             color={color}
             scrollYProgress={scrollYProgress}
-            scrollVelocity={scrollVelocity}
             isActive={activeSection === 'section1'}
           />
         ))}
-      </section>
+      </AnimatedSection>
       
-      <section id="section2" className="scroll-section spacer">
+      <AnimatedSection 
+        id="section2" 
+        className="scroll-section spacer" 
+        activeSection={activeSection}
+        fadeDuration={fadeDuration}
+        fadeDistance={fadeDistance}
+        animationType={animationType}
+      >
         <h2>Keep scrolling</h2>
-        <p>Progress based on viewport edge that's entering each section</p>
-      </section>
+        <p>Progress based on viewport edge that&apos;s entering each section</p>
+      </AnimatedSection>
       
-      <section id="section3" className="scroll-section cards-container reversed">
+      <AnimatedSection 
+        id="section3" 
+        className="scroll-section cards-container reversed" 
+        activeSection={activeSection}
+        fadeDuration={fadeDuration}
+        fadeDistance={fadeDistance}
+        animationType={animationType}
+      >
         {[...colors].reverse().map((color, index) => (
           <AnimatedCard
             key={`rev-${index}`}
             index={index + colors.length}
             color={color}
             scrollYProgress={scrollYProgress}
-            scrollVelocity={scrollVelocity}
             isActive={activeSection === 'section3'}
           />
         ))}
-      </section>
+      </AnimatedSection>
       
-      <section id="section4" className="scroll-section end-section">
+      <AnimatedSection 
+        id="section4" 
+        className="scroll-section end-section" 
+        activeSection={activeSection}
+        fadeDuration={fadeDuration}
+        fadeDistance={fadeDistance}
+        animationType={animationType}
+      >
         <h2>End of Demo</h2>
         <p>Scroll back up to see the effects again!</p>
-      </section>
+      </AnimatedSection>
     </div>
   );
 };
