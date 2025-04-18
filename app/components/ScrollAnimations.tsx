@@ -100,7 +100,8 @@ const ScrollProgressIndicator: React.FC<{
   activeSection: string | null;
   scrollDirection: 'up' | 'down' | 'none';
   scrollVelocity: number;
-}> = ({ progress, currentThreshold, activeSection, scrollDirection, scrollVelocity }) => {
+  inCooldown: boolean;
+}> = ({ progress, currentThreshold, activeSection, scrollDirection, scrollVelocity, inCooldown }) => {
   
   // Don't show at edges when scrolling in direction with no more sections
   if ((activeSection === 'intro' && scrollDirection === 'up') || 
@@ -117,25 +118,35 @@ const ScrollProgressIndicator: React.FC<{
   
   // Determine message based on position in page and scroll direction
   let message = `Scroll to ${thresholdPercent}% to transition`;
-  if (isAtSectionBottom && !hasEnoughVelocity) {
+  
+  if (inCooldown) {
+    message = 'Cooldown active (1s) - transitions paused';
+  } else if (isAtSectionBottom && !hasEnoughVelocity) {
     message = 'Scroll faster to transition at section bottom';
   } else if (hasReachedThreshold) {
     message = 'Release to trigger transition';
   }
   
   // Add direction to the message
-  if (activeSection === 'intro') {
-    message = `${message} down`;
-  } else if (activeSection === 'section4') {
-    message = `${message} up`;
-  } else if (scrollDirection === 'up') {
-    message = `${message} to top of current section`;
-  } else {
-    message = `${message} to next section`;
+  if (!inCooldown) {
+    if (activeSection === 'intro') {
+      message = `${message} down`;
+    } else if (activeSection === 'section4') {
+      message = `${message} up`;
+    } else if (scrollDirection === 'up') {
+      message = `${message} to top of current section`;
+    } else {
+      message = `${message} to next section`;
+    }
   }
   
+  const cssClass = `scroll-progress-indicator 
+                    ${isNearThreshold ? 'near-threshold' : ''} 
+                    ${hasReachedThreshold && (!isAtSectionBottom || hasEnoughVelocity) && !inCooldown ? 'at-threshold' : ''} 
+                    ${inCooldown ? 'cooldown' : ''}`;
+  
   return (
-    <div className={`scroll-progress-indicator ${isNearThreshold ? 'near-threshold' : ''} ${hasReachedThreshold && (!isAtSectionBottom || hasEnoughVelocity) ? 'at-threshold' : ''}`}>
+    <div className={cssClass}>
       <div className="progress-text">
         {scrollDirection === 'up' ? 'Scrolling up' : 'Scrolling down'}: {progressPercent}%
       </div>
@@ -144,12 +155,17 @@ const ScrollProgressIndicator: React.FC<{
           Velocity: {Math.abs(scrollVelocity).toFixed(2)} {hasEnoughVelocity ? '✓' : '✗'}
         </div>
       )}
+      {inCooldown && (
+        <div className="cooldown-text">
+          Cooldown Active - Scrolling Locked
+        </div>
+      )}
       <div className="progress-bar-container">
         <div className="progress-bar" style={{ width: `${progressPercent}%` }}></div>
         <div className="threshold-marker" style={{ left: `${thresholdPercent}%` }}></div>
       </div>
       <div className="threshold-text">
-        {message} (Threshold: {thresholdPercent}%)
+        {message} {!inCooldown && `(Threshold: ${thresholdPercent}%)`}
       </div>
     </div>
   );
@@ -167,6 +183,7 @@ const ScrollAnimations: React.FC = () => {
   const { 
     activeSection, 
     isSnapping, 
+    inCooldown,
     canExitSection,
     isScrollDisabled,
     scrollProgress,
@@ -177,8 +194,9 @@ const ScrollAnimations: React.FC = () => {
   } = useSectionLock('.scroll-section', {
     downThreshold: 0.98,   // 98% for scrolling down
     upThreshold: 0.98,     // 98% for scrolling up
-    snapDuration: 1000,   // Animation duration
+    snapDuration: 1000,    // Animation duration
     bottomVelocityThreshold: 1, // Minimum velocity when at section bottom
+    cooldownDuration: 1000, // 1 second cooldown after transitions
   });
   
   // Determine scroll indicator direction based on active section
@@ -226,6 +244,7 @@ const ScrollAnimations: React.FC = () => {
         <div>Threshold: {Math.round(currentThreshold * 100)}%</div>
         <div>At Bottom: {scrollProgress >= 0.95 ? `Yes (min vel: 1.0)` : 'No'}</div>
         <div>Snapping: {isSnapping ? 'Yes' : 'No'}</div>
+        <div>Cooldown: {inCooldown ? 'Yes (scrolling locked)' : 'No'}</div>
         <div>Scroll Locked: {isScrollDisabled ? 'Yes' : 'No'}</div>
       </div>
       
@@ -242,6 +261,7 @@ const ScrollAnimations: React.FC = () => {
         activeSection={activeSection}
         scrollDirection={scrollDirection}
         scrollVelocity={scrollVelocity}
+        inCooldown={inCooldown}
       />
       
       <TransitionOverlay 

@@ -14,6 +14,7 @@ type SectionLockOptions = {
   upThreshold?: number;    // Percentage threshold when scrolling up (0.0 to 1.0)
   snapDuration?: number;   // Duration of the snapping animation in ms
   bottomVelocityThreshold?: number; // Minimum scroll velocity when at section bottom
+  cooldownDuration?: number; // Cooldown period after animations in ms
 };
 
 export const useSectionLock = (
@@ -24,8 +25,9 @@ export const useSectionLock = (
   const {
     downThreshold = 0.98,    // 98% by default when scrolling down
     upThreshold = 0.98,      // 98% by default when scrolling up
-    snapDuration = 1000,    // 1 second animation by default
+    snapDuration = 1000,     // 1 second animation by default
     bottomVelocityThreshold = 1,  // Minimum velocity required at section bottom
+    cooldownDuration = 1000, // 1 second cooldown by default
   } = options;
 
   // Extract scroll velocity and direction
@@ -39,6 +41,9 @@ export const useSectionLock = (
   
   // Track if scrolling is disabled
   const [isScrollDisabled, setIsScrollDisabled] = useState(false);
+  
+  // Track if we're in the cooldown period
+  const [inCooldown, setInCooldown] = useState(false);
   
   // Track scroll progress within the current section
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -124,7 +129,7 @@ export const useSectionLock = (
     // Set snapping flag for visual feedback
     setIsSnapping(true);
     
-    // Temporarily disable scrolling
+    // Disable scrolling
     setIsScrollDisabled(true);
 
     // Scroll to the target section
@@ -133,21 +138,29 @@ export const useSectionLock = (
       behavior: 'smooth'
     });
     
-    // Reset after animation completes
+    // Reset snapping after animation completes
     setTimeout(() => {
       setIsSnapping(false);
-      setIsScrollDisabled(false);
+      
+      // Start cooldown period
+      setInCooldown(true);
+      setTimeout(() => {
+        setInCooldown(false);
+        // Only re-enable scrolling after cooldown is complete
+        setIsScrollDisabled(false);
+      }, cooldownDuration);
+      
     }, snapDuration);
     
-  }, [snapDuration]);
+  }, [snapDuration, cooldownDuration]);
 
   // Determine if we should snap to the next or previous section
   const checkForSectionTransition = useCallback(() => {
-    if (!activeSection || isSnapping) return;
+    if (!activeSection || isSnapping || inCooldown) return;
     
     // Get the current progress and relevant threshold
     const progressThreshold = scrollDirection === 'up' ? upThreshold : downThreshold;
-    console.log(`Progress: ${scrollProgress.toFixed(2)}, Threshold: ${progressThreshold}, Direction: ${scrollDirection}, Velocity: ${Math.abs(scrollVelocity).toFixed(2)}`);
+    console.log(`Progress: ${scrollProgress.toFixed(2)}, Threshold: ${progressThreshold}, Direction: ${scrollDirection}, Velocity: ${Math.abs(scrollVelocity).toFixed(2)}, Cooldown: ${inCooldown}`);
     
     // Cannot exit the last section by scrolling down
     const lastSectionId = sectionsRef.current[sectionsRef.current.length - 1]?.id;
@@ -171,8 +184,7 @@ export const useSectionLock = (
         snapToSection(sectionsRef.current[currentIndex + 1].id);
       }
     } else if (scrollDirection === 'up' && scrollProgress >= upThreshold) {
-      // When scrolling up and progress >= upThreshold (90%), snap to top of current section
-      // This should work for all sections including the intro/first section
+      // When scrolling up and progress >= upThreshold (98%), snap to top of current section
       const currentSection = sectionsRef.current.find(section => section.id === activeSection);
       if (currentSection) {
         // Use snapToSection but with the current section ID to snap to its top
@@ -194,11 +206,19 @@ export const useSectionLock = (
         // Reset after animation completes
         setTimeout(() => {
           setIsSnapping(false);
-          setIsScrollDisabled(false);
+          
+          // Start cooldown period
+          setInCooldown(true);
+          setTimeout(() => {
+            setInCooldown(false);
+            // Only re-enable scrolling after cooldown is complete
+            setIsScrollDisabled(false);
+          }, cooldownDuration);
+          
         }, snapDuration);
       }
     }
-  }, [activeSection, isSnapping, scrollProgress, scrollDirection, scrollVelocity, snapToSection, downThreshold, upThreshold, snapDuration, bottomVelocityThreshold]);
+  }, [activeSection, isSnapping, inCooldown, scrollProgress, scrollDirection, scrollVelocity, snapToSection, downThreshold, upThreshold, snapDuration, cooldownDuration, bottomVelocityThreshold]);
 
   // Update sections on mount and window resize
   useEffect(() => {
@@ -270,7 +290,8 @@ export const useSectionLock = (
   return {
     activeSection,
     isSnapping,
-    canExitSection: !isSnapping,
+    inCooldown,
+    canExitSection: !isSnapping && !inCooldown,
     isScrollDisabled,
     scrollProgress,
     scrollDirection,
