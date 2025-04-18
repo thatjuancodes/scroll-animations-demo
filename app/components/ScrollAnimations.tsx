@@ -171,15 +171,212 @@ const ScrollProgressIndicator: React.FC<{
   );
 };
 
+// Developer Controls Panel for adjusting parameters
+const DevControlsPanel: React.FC<{
+  downThreshold: number;
+  setDownThreshold: (value: number) => void;
+  upThreshold: number;
+  setUpThreshold: (value: number) => void;
+  bottomVelocityThreshold: number;
+  setBottomVelocityThreshold: (value: number) => void;
+  snapDuration: number;
+  setSnapDuration: (value: number) => void;
+  cooldownDuration: number;
+  setCooldownDuration: (value: number) => void;
+}> = ({
+  downThreshold,
+  setDownThreshold,
+  upThreshold,
+  setUpThreshold,
+  bottomVelocityThreshold,
+  setBottomVelocityThreshold,
+  snapDuration,
+  setSnapDuration,
+  cooldownDuration,
+  setCooldownDuration
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const panelStyle: React.CSSProperties = {
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    color: 'white',
+    borderRadius: '8px',
+    padding: isExpanded ? '20px' : '10px',
+    zIndex: 1001,
+    width: isExpanded ? '300px' : 'auto',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+    fontFamily: 'monospace',
+    maxHeight: '80vh',
+    overflowY: 'auto'
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    backgroundColor: 'rgba(50, 120, 220, 0.6)',
+    border: 'none',
+    color: 'white',
+    padding: '8px 12px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+    fontSize: '12px',
+    fontWeight: 'bold'
+  };
+
+  const controlGroupStyle: React.CSSProperties = {
+    marginBottom: '15px',
+    display: isExpanded ? 'block' : 'none'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    marginBottom: '5px',
+    fontSize: '12px',
+    color: '#ccc'
+  };
+
+  const valueStyle: React.CSSProperties = {
+    display: 'inline-block',
+    minWidth: '50px',
+    textAlign: 'right',
+    marginLeft: '10px',
+    color: '#61dafb',
+    fontSize: '12px'
+  };
+
+  const sliderStyle: React.CSSProperties = {
+    width: '100%',
+    accentColor: '#61dafb',
+    background: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: '4px',
+    marginTop: '2px'
+  };
+
+  const formatValue = (value: number, type: string): string => {
+    if (type === 'percentage') {
+      return `${(value * 100).toFixed(0)}%`;
+    } else if (type === 'duration') {
+      return `${value}ms`;
+    } else {
+      return value.toFixed(2);
+    }
+  };
+
+  return (
+    <div style={panelStyle}>
+      <button 
+        style={buttonStyle} 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        {isExpanded ? 'Hide Controls' : 'Show Controls'}
+      </button>
+
+      <div style={controlGroupStyle}>
+        <h3 style={{fontSize: '14px', marginTop: '15px'}}>Scroll Animation Controls</h3>
+        
+        <div style={{marginTop: '20px'}}>
+          <label style={labelStyle}>
+            Down Threshold 
+            <span style={valueStyle}>{formatValue(downThreshold, 'percentage')}</span>
+          </label>
+          <input 
+            type="range" 
+            min="0.5" 
+            max="1" 
+            step="0.01" 
+            value={downThreshold} 
+            onChange={(e) => setDownThreshold(parseFloat(e.target.value))}
+            style={sliderStyle}
+          />
+        </div>
+
+        <div style={{marginTop: '15px'}}>
+          <label style={labelStyle}>
+            Up Threshold 
+            <span style={valueStyle}>{formatValue(upThreshold, 'percentage')}</span>
+          </label>
+          <input 
+            type="range" 
+            min="0.5" 
+            max="1" 
+            step="0.01" 
+            value={upThreshold} 
+            onChange={(e) => setUpThreshold(parseFloat(e.target.value))}
+            style={sliderStyle}
+          />
+        </div>
+
+        <div style={{marginTop: '15px'}}>
+          <label style={labelStyle}>
+            Bottom Velocity Threshold 
+            <span style={valueStyle}>{formatValue(bottomVelocityThreshold, 'number')}</span>
+          </label>
+          <input 
+            type="range" 
+            min="0.1" 
+            max="5" 
+            step="0.1" 
+            value={bottomVelocityThreshold} 
+            onChange={(e) => setBottomVelocityThreshold(parseFloat(e.target.value))}
+            style={sliderStyle}
+          />
+        </div>
+
+        <div style={{marginTop: '15px'}}>
+          <label style={labelStyle}>
+            Snap Duration 
+            <span style={valueStyle}>{formatValue(snapDuration, 'duration')}</span>
+          </label>
+          <input 
+            type="range" 
+            min="200" 
+            max="2000" 
+            step="100" 
+            value={snapDuration} 
+            onChange={(e) => setSnapDuration(parseInt(e.target.value))}
+            style={sliderStyle}
+          />
+        </div>
+
+        <div style={{marginTop: '15px'}}>
+          <label style={labelStyle}>
+            Cooldown Duration 
+            <span style={valueStyle}>{formatValue(cooldownDuration, 'duration')}</span>
+          </label>
+          <input 
+            type="range" 
+            min="0" 
+            max="2000" 
+            step="100" 
+            value={cooldownDuration} 
+            onChange={(e) => setCooldownDuration(parseInt(e.target.value))}
+            style={sliderStyle}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ScrollAnimations: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Configuration state for animation parameters
+  const [downThreshold, setDownThreshold] = useState(0.98);
+  const [upThreshold, setUpThreshold] = useState(0.98);
+  const [bottomVelocityThreshold, setBottomVelocityThreshold] = useState(1);
+  const [snapDuration, setSnapDuration] = useState(1000);
+  const [cooldownDuration, setCooldownDuration] = useState(1000);
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start end', 'end start']
   });
   
-  // Use our custom section locking hook with direction-specific thresholds
+  // Use our custom section locking hook with adjustable thresholds
   const { 
     activeSection, 
     isSnapping, 
@@ -192,11 +389,11 @@ const ScrollAnimations: React.FC = () => {
     scrollY,
     scrollVelocity
   } = useSectionLock('.scroll-section', {
-    downThreshold: 0.98,   // 98% for scrolling down
-    upThreshold: 0.98,     // 98% for scrolling up
-    snapDuration: 1000,    // Animation duration
-    bottomVelocityThreshold: 1, // Minimum velocity when at section bottom
-    cooldownDuration: 1000, // 1 second cooldown after transitions
+    downThreshold,
+    upThreshold,
+    snapDuration,
+    bottomVelocityThreshold,
+    cooldownDuration,
   });
   
   // Determine scroll indicator direction based on active section
@@ -247,6 +444,20 @@ const ScrollAnimations: React.FC = () => {
         <div>Cooldown: {inCooldown ? 'Yes (scrolling locked)' : 'No'}</div>
         <div>Scroll Locked: {isScrollDisabled ? 'Yes' : 'No'}</div>
       </div>
+      
+      {/* Developer Controls Panel */}
+      <DevControlsPanel
+        downThreshold={downThreshold}
+        setDownThreshold={setDownThreshold}
+        upThreshold={upThreshold}
+        setUpThreshold={setUpThreshold}
+        bottomVelocityThreshold={bottomVelocityThreshold}
+        setBottomVelocityThreshold={setBottomVelocityThreshold}
+        snapDuration={snapDuration}
+        setSnapDuration={setSnapDuration}
+        cooldownDuration={cooldownDuration}
+        setCooldownDuration={setCooldownDuration}
+      />
       
       <ScrollIndicator 
         canExit={canExitSection}
