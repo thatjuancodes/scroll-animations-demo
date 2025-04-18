@@ -1,0 +1,445 @@
+/* Scroll Animation Styles */
+.scroll-container {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Scroll locked state */
+.scroll-container.scroll-locked {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Scroll progress indicator */
+.scroll-progress-indicator {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 15px;
+  padding: 15px;
+  color: white;
+  z-index: 100;
+  text-align: center;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  opacity: 0.85;
+  pointer-events: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.scroll-progress-indicator.near-threshold {
+  bottom: 40px;
+  opacity: 0.95;
+  background-color: rgba(0, 150, 255, 0.8);
+  box-shadow: 0 0 15px rgba(0, 150, 255, 0.5);
+  font-weight: 500;
+}
+
+.scroll-progress-indicator.at-threshold {
+  bottom: 45px;
+  opacity: 1;
+  background-color: rgba(50, 205, 50, 0.9);
+  box-shadow: 0 0 20px rgba(50, 205, 50, 0.6), 0 0 30px rgba(50, 205, 50, 0.4);
+  transform: translateX(-50%) scale(1.05);
+  animation: pulse-indicator 1.2s infinite alternate;
+}
+
+@keyframes pulse-indicator {
+  0% { transform: translateX(-50%) scale(1.05); }
+  100% { transform: translateX(-50%) scale(1.1); }
+}
+
+.progress-text {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.velocity-text {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.velocity-text::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin-top: 8px;
+}
+
+.progress-bar-container {
+  height: 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: white;
+  border-radius: 5px;
+  transition: width 0.15s linear;
+}
+
+.at-threshold .progress-bar {
+  background-color: #ffff00;
+  box-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+  animation: progress-pulse 0.8s infinite alternate;
+}
+
+@keyframes progress-pulse {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
+}
+
+.threshold-marker {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: #FF9500;
+  z-index: 2;
+}
+
+.at-threshold .threshold-marker {
+  background-color: #ffff00;
+  box-shadow: 0 0 5px #ffff00;
+  width: 4px;
+}
+
+.threshold-text {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 6px;
+}
+
+.at-threshold .threshold-text {
+  font-weight: bold;
+  opacity: 1;
+  font-size: 14px;
+  color: #ffff00;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Transition overlay when snapping between sections */
+.transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.section-indicator {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #000;
+  padding: 15px 30px;
+  border-radius: 30px;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Scroll section shared styles */
+.scroll-section {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  transition: transform 0.3s ease-out;
+  will-change: transform;
+}
+
+/* Section indicator */
+.scroll-section::after {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  z-index: 10;
+}
+
+/* Scroll Indicator Styles */
+.scroll-indicator-container {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.scroll-indicator {
+  width: 40px;
+  height: 80px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  position: relative;
+}
+
+.arrow.up {
+  border-bottom: 8px solid white;
+  margin-top: 5px;
+}
+
+.arrow.down {
+  border-top: 8px solid white;
+  margin-bottom: 5px;
+}
+
+.velocity-meter {
+  width: 24px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 5px 0;
+  position: relative;
+}
+
+.velocity-fill {
+  height: 100%;
+  background: white;
+  transition: width 0.1s linear;
+}
+
+.threshold-line {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 2;
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
+
+.scroll-status {
+  margin-top: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.scroll-status .locked {
+  color: #ff6464;
+}
+
+.scroll-status .free {
+  color: #64ff64;
+}
+
+.hero {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 1rem;
+  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+  color: white;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.hero p {
+  font-size: 1.5rem;
+  max-width: 600px;
+}
+
+.instruction {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.6; transform: scale(1); }
+}
+
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  padding: 4rem 2rem;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.cards-container.reversed {
+  background-color: #212529;
+}
+
+.card {
+  width: 300px;
+  height: 200px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  text-align: center;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.card.active {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+}
+
+.active-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.card p {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.spacer {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to right, #8e2de2, #4a00e0);
+  color: white;
+}
+
+.spacer p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  animation: highlight 1.5s infinite alternate;
+}
+
+@keyframes highlight {
+  from { background: rgba(255, 255, 255, 0.1); }
+  to { background: rgba(255, 255, 255, 0.3); }
+}
+
+.end-section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+  color: white;
+  text-align: center;
+}
+
+.end-section h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.end-section p {
+  font-size: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  
+  .hero p {
+    font-size: 1.2rem;
+  }
+  
+  .card {
+    width: 250px;
+    height: 180px;
+  }
+  
+  .end-section h2 {
+    font-size: 2.5rem;
+  }
+  
+  .end-section p {
+    font-size: 1.2rem;
+  }
+  
+  .scroll-indicator-container {
+    left: 10px;
+  }
+  
+  .section-indicator {
+    font-size: 16px;
+    padding: 12px 24px;
+  }
+  
+  .scroll-progress-indicator {
+    width: 250px;
+    padding: 12px;
+    font-size: 12px;
+  }
+} 
